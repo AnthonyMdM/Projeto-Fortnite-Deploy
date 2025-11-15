@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  name         String?
+  image        String?
+  email        String     @unique
+  passwordHash String
+  vbucks       Int        @default(10000)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  ItemsBuy     ItemsBuy[]
+  OfferBuy     OfferBuy[]
+}
+
+model ItemsBuy {
+  id                Int                 @id @default(autoincrement())
+  userId            Int
+  itemId            String
+  image             String?
+  purchasedAt       DateTime            @default(now())
+  User              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  OfferBuy_ItemsBuy OfferBuy_ItemsBuy[]
+
+  @@unique([userId, itemId])
+  @@index([userId])
+  @@index([itemId])
+}
+
+model OfferBuy {
+  id                Int                 @id @default(autoincrement())
+  userId            Int
+  offerId           String
+  price             Int
+  image             String?
+  purchasedAt       DateTime            @default(now())
+  User              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  OfferBuy_ItemsBuy OfferBuy_ItemsBuy[]
+
+  @@unique([userId, offerId])
+  @@index([userId])
+  @@index([offerId])
+}
+
+model OfferBuy_ItemsBuy {
+  offerBuyId Int
+  itemBuyId  Int
+  ItemsBuy   ItemsBuy @relation(fields: [itemBuyId], references: [id], onDelete: Cascade)
+  OfferBuy   OfferBuy @relation(fields: [offerBuyId], references: [id], onDelete: Cascade)
+
+  @@id([offerBuyId, itemBuyId])
+  @@index([offerBuyId])
+  @@index([itemBuyId])
+}
