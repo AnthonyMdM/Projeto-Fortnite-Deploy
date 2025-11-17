@@ -24,7 +24,7 @@ export default async function Page({
 
   const user = await findUser(Number(session?.user.id));
 
-  if (!session || user === null || user === undefined) {
+  if (!session || user === null || user === null) {
     return <PageItem item={itemFind} />;
   }
 
