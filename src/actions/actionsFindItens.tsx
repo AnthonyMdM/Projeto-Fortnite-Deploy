@@ -11,13 +11,10 @@ import {
   FortniteLegoKit,
   FortniteSingleItem,
   FortniteTrack,
-  ShopBundle,
   ShopEntryItem,
-  ShopNewDisplayAsset,
   ShopResponse,
-} from "../types/cosmeticsType";
+} from "@/src/types/APIType";
 
-// Função para normalizar itens de diferentes categorias para FortniteSingleItem
 function normalizeToSingleItem(
   item: any,
   category: string
@@ -124,7 +121,6 @@ function normalizeToSingleItem(
   }
 }
 
-// 🔹 Função que busca direto da API e normaliza
 export async function fetchFromAPI(): Promise<FortniteSingleItem[]> {
   const response = await fetch(
     "https://fortnite-api.com/v2/cosmetics?language=pt-BR",
@@ -162,7 +158,6 @@ export async function fetchFromAPI(): Promise<FortniteSingleItem[]> {
   return normalizedItems;
 }
 
-// 🔹 Server Action: busca todos os cosméticos direto da API
 export async function FindCosmetics(): Promise<FortniteSingleItem[] | null> {
   try {
     return await fetchFromAPI();
@@ -172,7 +167,6 @@ export async function FindCosmetics(): Promise<FortniteSingleItem[] | null> {
   }
 }
 
-// 🔹 Server Action: busca cosmético por ID
 export async function FindCosmeticItemById(
   id: string
 ): Promise<FortniteSingleItem | null> {
@@ -187,7 +181,6 @@ export async function FindCosmeticItemById(
   }
 }
 
-// 🔹 Server Action: busca novos cosméticos
 export async function FindCosmeticsNew(): Promise<FortniteItems | null> {
   try {
     const response = await fetch(
@@ -204,7 +197,6 @@ export async function FindCosmeticsNew(): Promise<FortniteItems | null> {
   }
 }
 
-// 🔹 Server Action: busca dados da loja
 async function fetchShopData(): Promise<ShopResponse> {
   const response = await fetch(
     "https://fortnite-api.com/v2/shop?language=pt-BR",
@@ -216,7 +208,6 @@ async function fetchShopData(): Promise<ShopResponse> {
   return json;
 }
 
-// 🔹 Server Action: busca e agrupa cosméticos da loja
 export async function FindCosmeticsShop(): Promise<{
   groupedBundles: any[];
   groupedItems: any[];
@@ -255,7 +246,6 @@ export async function FindCosmeticsShop(): Promise<{
   }
 }
 
-// 🔹 Server Action: busca item da loja por offerId
 export async function FindShopItem(
   item: string
 ): Promise<ShopEntryItem | null> {
@@ -270,7 +260,6 @@ export async function FindShopItem(
   }
 }
 
-// 🔹 Server Action: retorna IDs de itens da loja
 export async function getShopItemIds(): Promise<string[]> {
   try {
     const shopData = await fetchShopData();

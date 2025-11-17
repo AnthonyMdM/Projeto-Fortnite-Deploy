@@ -3,7 +3,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { signIn } from "@/src/lib/auth";
 import { FormState } from "@/src/types/types-global";
-import { prisma } from "../lib/prisma";
+import { prisma } from "@/src/lib/prisma";
 
 const registerSchema = z.object({
   nome: z

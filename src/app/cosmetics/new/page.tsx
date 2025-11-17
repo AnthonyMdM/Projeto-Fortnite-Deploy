@@ -5,6 +5,12 @@ import {
 } from "@/src/actions/actionsFindItens";
 import PageCosmeticsNew from "@/src/components/view/CosmeticNewPage";
 import { auth } from "@/src/lib/auth";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Novos Cosméticos",
+  description: "Novos",
+};
 
 export default async function Page() {
   const session = await auth();

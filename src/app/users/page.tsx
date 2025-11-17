@@ -1,12 +1,17 @@
 import { getAllUsers } from "@/src/actions/actionsDB";
 import { PageUsers } from "@/src/components/view/UsersPage";
+import { Metadata } from "next";
 
-export const revalidate = 3600; // Revalidar a cada 1 hora
-// Ou use: export const dynamic = 'force-static';
+export const metadata: Metadata = {
+  title: "Fortnite Usuários",
+  description: "Todos Usuários",
+};
 
+export const revalidate = 3600;
 export default async function UsersPage() {
-  // Buscar primeira página no servidor (build time)
+
   const initialData = await getAllUsers(1, 20);
+  if (initialData.users.length === 0) return <p>Nenhum usuário encontrado</p>;
 
   return <PageUsers initialData={initialData} />;
 }

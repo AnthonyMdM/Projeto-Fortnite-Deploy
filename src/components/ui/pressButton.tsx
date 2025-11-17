@@ -9,14 +9,14 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@radix-ui/react-tooltip";
-import { twMerge } from "tailwind-merge"; // importante para combinar classes Tailwind
+import { twMerge } from "tailwind-merge";
 
 interface HoldButtonProps {
   duration?: number;
   onConfirm: () => void;
   children: React.ReactNode;
-  className?: string; // <--- nova prop para customização externa
-  tooltipText?: string; // opcional para o conteúdo do tooltip
+  className?: string; 
+  tooltipText?: string; 
 }
 
 export function HoldButton({
@@ -43,7 +43,7 @@ export function HoldButton({
         onConfirm();
         setValue(0);
       }
-    }, 16); // atualiza ~60fps
+    }, 16); 
   };
 
   const handlePressEnd = () => {
@@ -66,7 +66,7 @@ export function HoldButton({
             onTouchEnd={handlePressEnd}
             className={twMerge(
               "relative overflow-hidden rounded-lg bg-yellow-300 backdrop-blur-md text-black font-roboto font-semibold shadow-md transition-all hover:scale-105 active:scale-95",
-              className // aplica classes externas
+              className 
             )}
           >
             {children}

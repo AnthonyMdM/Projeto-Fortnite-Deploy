@@ -1,23 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ShopEntryItem } from "../types/cosmeticsType";
-import { auth } from "../lib/auth";
-import { prisma } from "../lib/prisma";
-import { OfferBuy } from "@prisma/client";
+import { ShopEntryItem } from "@/src/types/APIType";
+import { auth } from "@/src/lib/auth";
+import { prisma } from "@/src/lib/prisma";
+import { ItemsBuy, OfferBuy } from "@prisma/client";
 
-// ========== USERS ==========
 export async function findUser(id: number) {
   const user = await prisma.user.findUnique({
     where: { id },
-    select: {
-      id: true,
-      name: true,
-      image: true,
-      email: true,
-      vbucks: true,
-      createdAt: true,
-    },
   });
   return user;
 }
@@ -27,14 +18,6 @@ export async function getAllUsers(page: number = 1, pageSize: number = 20) {
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        image: true,
-        email: true,
-        vbucks: true,
-        createdAt: true,
-      },
       orderBy: { createdAt: "desc" },
       take: pageSize,
       skip: skip,
@@ -99,7 +82,6 @@ export async function getUserWardrobe(userId: number) {
   return items;
 }
 
-// ========== HISTÓRICO DE COMPRAS ==========
 export async function getUserPurchaseHistory(userId: number) {
   const ofertas = await prisma.offerBuy.findMany({
     where: { userId },
@@ -111,14 +93,13 @@ export async function getUserPurchaseHistory(userId: number) {
   };
 }
 
-// ========== PURCHASES ==========
 export async function getUserPurchasedOffers(userId: number) {
   return await prisma.offerBuy.findMany({
     where: { userId },
     include: {
-      items: {
+      OfferBuy_ItemsBuy: {
         include: {
-          itemBuy: true,
+          ItemsBuy: true,
         },
       },
     },
@@ -164,11 +145,10 @@ export async function getOffer(offerBuyId: number): Promise<OfferBuy> {
     throw new Error("Oferta não encontrada.");
   }
 
-  // Agora retorna os objetos ItemsBuy completos
   return relations;
 }
 
-export async function getItemsOffer(offerBuyId: number): Promise<string[]> {
+export async function getItemsOffer(offerBuyId: number): Promise<ItemsBuy[]> {
   if (!offerBuyId) {
     throw new Error("O parâmetro offerBuyId é obrigatório.");
   }
@@ -176,15 +156,13 @@ export async function getItemsOffer(offerBuyId: number): Promise<string[]> {
   const relations = await prisma.offerBuy_ItemsBuy.findMany({
     where: { offerBuyId },
     include: {
-      itemBuy: true, // já puxa os dados completos do item
+      ItemsBuy: true,
     },
   });
 
-  // Agora retorna os objetos ItemsBuy completos
-  return relations.map((relation) => relation.itemBuy.itemId);
+  return relations.map((relation) => relation.ItemsBuy);
 }
 
-// ========== CREATE PURCHASE ==========
 export async function createOfferBuy(shopItem: ShopEntryItem) {
   try {
     const session = await auth();
@@ -203,7 +181,6 @@ export async function createOfferBuy(shopItem: ShopEntryItem) {
       return { success: false, error: "ID da oferta não encontrado" };
     }
 
-    // Verificar se usuário já comprou esta oferta
     const existingOffer = await prisma.offerBuy.findUnique({
       where: {
         userId_offerId: {
@@ -217,7 +194,6 @@ export async function createOfferBuy(shopItem: ShopEntryItem) {
       return { success: false, error: "Você já comprou esta oferta" };
     }
 
-    // Verificar saldo
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { vbucks: true },
@@ -234,7 +210,15 @@ export async function createOfferBuy(shopItem: ShopEntryItem) {
       };
     }
 
-    // Coletar todos os itens da oferta
+    const getItemImage = (item: any): string => {
+      // brItems - usa icon ou smallIcon
+      if (item.images?.featured) return item.images.featured;
+      if (item.albumArt) return item.albumArt;
+      if (item.images?.large) return item.images.large;
+
+      return "";
+    };
+
     const allItems = [
       ...(shopItem.brItems ?? []),
       ...(shopItem.tracks ?? []),
@@ -247,7 +231,6 @@ export async function createOfferBuy(shopItem: ShopEntryItem) {
       return { success: false, error: "Esta oferta não contém itens válidos" };
     }
 
-    // Transação para criar a compra
     const result = await prisma.$transaction(async (tx) => {
       // 1. Decrementar V-Bucks
       await tx.user.update({
@@ -255,19 +238,42 @@ export async function createOfferBuy(shopItem: ShopEntryItem) {
         data: { vbucks: { decrement: price } },
       });
 
-      // 2. Criar a oferta
+      const offerImage =
+        shopItem.newDisplayAsset?.renderImages?.[0]?.image ||
+        shopItem.items?.[0]?.images?.icon ||
+        shopItem.items?.[0]?.images?.smallIcon ||
+        "";
+
+      const offerTag = shopItem.offerTag?.text || null;
+
       const offerBuy = await tx.offerBuy.create({
         data: {
           userId,
           offerId: shopItem.offerId,
           price,
+          image: offerImage,
+          offerTag: offerTag,
         },
       });
 
-      // 3. Criar ou buscar itens (upsert para evitar duplicatas)
       const itemBuyIds: number[] = [];
 
+      const getItemName = (item: any): string => {
+        // Tracks usam "title" ao invés de "name"
+        if ("title" in item && item.title) return item.title;
+
+        if ("name" in item && item.name) return item.name;
+
+        if ("cosmeticId" in item && item.cosmeticId) return item.cosmeticId;
+        if ("devName" in item && item.devName) return item.devName;
+
+        return "Item sem nome";
+      };
+
       for (const item of allItems) {
+        const itemImage = getItemImage(item);
+        const itemName = getItemName(item);
+
         const itemBuy = await tx.itemsBuy.upsert({
           where: {
             userId_itemId: {
@@ -278,19 +284,24 @@ export async function createOfferBuy(shopItem: ShopEntryItem) {
           create: {
             userId,
             itemId: item.id,
+            name: itemName,
+            image: itemImage,
           },
-          update: {}, // Não atualiza nada se já existe
+          update: {
+            name: itemName,
+            image: itemImage,
+          },
         });
 
         itemBuyIds.push(itemBuy.id);
       }
 
-      // 4. Criar relacionamentos entre oferta e itens
       await tx.offerBuy_ItemsBuy.createMany({
         data: itemBuyIds.map((itemBuyId) => ({
           offerBuyId: offerBuy.id,
           itemBuyId,
         })),
+        skipDuplicates: true,
       });
 
       return { offerBuy, itemsCount: itemBuyIds.length };
@@ -313,7 +324,6 @@ export async function createOfferBuy(shopItem: ShopEntryItem) {
   }
 }
 
-// ========== REFUND ==========
 export async function refundOffer(offerBuyId: number) {
   try {
     const session = await auth();
@@ -323,16 +333,15 @@ export async function refundOffer(offerBuyId: number) {
 
     const userId = Number(session.user.id);
 
-    // Buscar oferta com todos os relacionamentos
     const offer = await prisma.offerBuy.findUnique({
       where: {
         id: offerBuyId,
-        userId: userId,
+        userId,
       },
       include: {
-        items: {
+        OfferBuy_ItemsBuy: {
           include: {
-            itemBuy: true,
+            ItemsBuy: true,
           },
         },
       },
@@ -346,12 +355,10 @@ export async function refundOffer(offerBuyId: number) {
       return { success: false, error: "Esta oferta não pertence a você" };
     }
 
-    const itemIds = offer.items.map((oi) => oi.itemBuy.id);
+    const itemIds = offer.OfferBuy_ItemsBuy.map((oi) => oi.ItemsBuy.id);
     const refundAmount = offer.price;
 
-    // Usar transação para garantir consistência
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Devolver V-Bucks
       await tx.user.update({
         where: { id: userId },
         data: {
@@ -359,31 +366,26 @@ export async function refundOffer(offerBuyId: number) {
           updatedAt: new Date(),
         },
       });
-
-      // 2. Deletar relacionamentos oferta-itens
       await tx.offerBuy_ItemsBuy.deleteMany({
         where: { offerBuyId: offer.id },
       });
 
-      // 3. Deletar a oferta (CASCADE vai deletar relacionamentos)
       await tx.offerBuy.delete({
         where: { id: offerBuyId },
       });
 
-      // 4. Para cada item, verificar se ainda está em outras ofertas do usuário
       const itemsToDelete: number[] = [];
 
       for (const itemId of itemIds) {
         const stillInUse = await tx.offerBuy_ItemsBuy.findFirst({
           where: {
             itemBuyId: itemId,
-            offerBuy: {
+            OfferBuy: {
               userId: userId,
             },
           },
         });
 
-        // Se o item não está em nenhuma outra oferta, deletá-lo
         if (!stillInUse) {
           itemsToDelete.push(itemId);
         }
@@ -420,7 +422,6 @@ export async function refundOffer(offerBuyId: number) {
   }
 }
 
-// ========== REFUND ALL OFFERS WITH ITEM ==========
 export async function refundOffersWithItem(itemId: string) {
   try {
     const session = await auth();
@@ -430,7 +431,6 @@ export async function refundOffersWithItem(itemId: string) {
 
     const userId = Number(session.user.id);
 
-    // Buscar o ItemsBuy do usuário com este itemId
     const itemBuy = await prisma.itemsBuy.findUnique({
       where: {
         userId_itemId: {
@@ -439,9 +439,9 @@ export async function refundOffersWithItem(itemId: string) {
         },
       },
       include: {
-        offers: {
+        OfferBuy_ItemsBuy: {
           include: {
-            offerBuy: true,
+            OfferBuy: true,
           },
         },
       },
@@ -451,7 +451,7 @@ export async function refundOffersWithItem(itemId: string) {
       return { success: false, error: "Item não encontrado nas suas compras" };
     }
 
-    const offerIds = itemBuy.offers.map((o) => o.offerBuy.id);
+    const offerIds = itemBuy.OfferBuy_ItemsBuy.map((o) => o.OfferBuy.id);
 
     if (offerIds.length === 0) {
       return {
@@ -487,7 +487,6 @@ export async function refundOffersWithItem(itemId: string) {
   }
 }
 
-// ========== STATISTICS ==========
 export async function getUserStats(userId: number) {
   const [totalSpent, totalOffers, totalItems] = await Promise.all([
     prisma.offerBuy.aggregate({

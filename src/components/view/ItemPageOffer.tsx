@@ -5,15 +5,14 @@ import { HoldButton } from "@/src/components/ui/pressButton";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { refundOffer } from "@/src/actions/actionsDB";
-import { OfferBuy, User } from "@prisma/client";
-import { FortniteSingleItem } from "@/src/types/cosmeticsType";
+import { ItemsBuy, OfferBuy, User } from "@prisma/client";
 
 export default function PageItemOffer({
   item,
   offer,
   user,
 }: {
-  item: FortniteSingleItem[];
+  item: ItemsBuy[];
   offer: OfferBuy;
   user: User;
 }) {
@@ -24,6 +23,7 @@ export default function PageItemOffer({
 
     if (result.success) {
       alert("Reembolso realizado com sucesso!");
+      router.push("/historico");
     } else {
       alert(result.error || "Erro ao reembolsar");
     }
@@ -31,7 +31,6 @@ export default function PageItemOffer({
 
   return (
     <div className="relative w-full min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 text-white flex flex-col">
-      {/* ================= HEADER ================= */}
       <header className="w-full px-6 py-6 flex items-center justify-between">
         <button
           onClick={() => router.back()}
@@ -43,7 +42,6 @@ export default function PageItemOffer({
           Voltar
         </button>
 
-        {/* Nome do item */}
         <h1
           className="text-4xl sm:text-5xl md:text-6xl font-black text-transparent 
                        bg-linear-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text drop-shadow-2xl"
@@ -51,7 +49,6 @@ export default function PageItemOffer({
           {item[0]?.name}
         </h1>
 
-        {/* 🔹 V-Bucks atuais do usuário */}
         <div>
           <span className="text-xs uppercase tracking-wide text-white/80">
             Meus V-Bucks
@@ -60,7 +57,6 @@ export default function PageItemOffer({
             className="flex flex-col items-end bg-black
              px-2 py-1 rounded-xl text-white shadow-2xl border-2 border-blue-400/30"
           >
-            {/* Valor + Ícone */}
             <div className="flex items-center gap-1">
               <span className="text-lg font-extrabold">
                 {user.vbucks.toLocaleString()}
@@ -77,7 +73,6 @@ export default function PageItemOffer({
         </div>
       </header>
 
-      {/* ================= LISTA DE ITENS ================= */}
       <main className="flex-1 flex flex-wrap justify-center gap-8 px-6 py-10 max-w-6xl mx-auto">
         {item.map((subItem) => (
           <div
@@ -88,12 +83,8 @@ export default function PageItemOffer({
                        duration-300 hover:scale-105 bg-linear-to-br from-slate-800 to-slate-900"
           >
             <Image
-              src={
-                subItem.images?.icon ??
-                subItem.images?.smallIcon ??
-                "/placeholder.png"
-              }
-              alt={subItem.name}
+              src={subItem.image ?? "/placeholder.png"}
+              alt={subItem.name ?? "Item"}
               fill
               priority
               className="object-cover object-center transition-transform duration-500 group-hover:scale-110"
@@ -102,7 +93,6 @@ export default function PageItemOffer({
         ))}
       </main>
 
-      {/* ================= FOOTER ================= */}
       <footer className="w-full px-10 py-8 flex justify-end items-center gap-6">
         <div
           className="flex items-center gap-3 bg-linear-to-r from-blue-500 to-blue-600 px-4 py-2 

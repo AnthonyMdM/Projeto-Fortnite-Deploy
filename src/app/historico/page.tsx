@@ -1,9 +1,13 @@
-// app/profile/wardrobe/page.tsx
 import { getUserOfferIds } from "@/src/actions/actionsDB";
 import { PageHistorico } from "@/src/components/view/HistoricoPage";
-
 import { auth } from "@/src/lib/auth";
+import { Metadata } from "next";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Histórico",
+  description: "Histórico de compras",
+};
 
 export default async function WardrobePage() {
   const session = await auth();

@@ -26,6 +26,7 @@ model ItemsBuy {
   itemId            String
   image             String?
   purchasedAt       DateTime            @default(now())
+  name              String?
   User              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   OfferBuy_ItemsBuy OfferBuy_ItemsBuy[]
 
@@ -41,6 +42,7 @@ model OfferBuy {
   price             Int
   image             String?
   purchasedAt       DateTime            @default(now())
+  offerTag          String?
   User              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   OfferBuy_ItemsBuy OfferBuy_ItemsBuy[]
 

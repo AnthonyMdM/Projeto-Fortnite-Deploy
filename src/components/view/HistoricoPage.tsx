@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Calendar, Package } from "lucide-react";
+import { Search, Calendar } from "lucide-react";
 import Link from "next/link";
 import {
   Card,
@@ -12,6 +12,7 @@ import {
 import { Input } from "@/src/components/ui-cn/input";
 import { ScrollArea } from "@/src/components/ui-cn/scroll-area";
 import { OfferBuy } from "@prisma/client";
+import Image from "next/image";
 
 export function PageHistorico({ offers }: { offers: OfferBuy[] }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,7 +25,6 @@ export function PageHistorico({ offers }: { offers: OfferBuy[] }) {
       year: "numeric",
     });
 
-  // 👉 Filtrar por texto + data
   const filtered = useMemo(() => {
     return offers.filter((offer) => {
       const matchText =
@@ -33,27 +33,25 @@ export function PageHistorico({ offers }: { offers: OfferBuy[] }) {
 
       const matchDate =
         dateFilter.trim().length === 0 ||
-        new Date(offer.purchasedAt).toISOString().slice(0, 10) === dateFilter; // YYYY-MM-DD
+        new Date(offer.purchasedAt).toISOString().slice(0, 10) === dateFilter; 
 
       return matchText && matchDate;
     });
   }, [offers, searchQuery, dateFilter]);
 
   return (
-    <div className="min-h-screen flex justify-center items-start bg-background py-6">
-      <ScrollArea className="w-full">
-        <Card className="w-full min-w-none xl:min-w-[1300px] mx-auto border-0 shadow-md">
-          <CardHeader>
-            <CardTitle className="font-bold text-5xl md:text-7xl shadow-lg text-black font-roboto uppercase bg-purple-500 px-8 py-4 w-max rounded-2xl">
+    <div className="min-h-screen flex justify-center items-start bg-background py-2">
+      <ScrollArea className=" max-w-7xl w-full">
+        <Card className="w-full border-0 shadow-md ">
+          <CardHeader className="px-0">
+            <CardTitle className="font-bold text-5xl md:text-7xl shadow-lg text-black font-roboto uppercase bg-yellow-400 px-8 py-4 w-max rounded-2xl">
               Compras do Usuário
             </CardTitle>
           </CardHeader>
 
           <CardContent className="flex px-0 flex-col space-y-6 w-full">
-            {/* 🔍 Filtros */}
             <div className="space-y-4 px-4 md:px-8 lg:px-12">
               <div className="flex flex-col md:flex-row gap-4 md:items-center">
-                {/* Buscar por OfferId */}
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-4 w-4" />
                   <Input
@@ -64,7 +62,6 @@ export function PageHistorico({ offers }: { offers: OfferBuy[] }) {
                   />
                 </div>
 
-                {/* Filtro de Data */}
                 <div className="relative w-full md:w-64">
                   <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-4 w-4" />
                   <Input
@@ -81,44 +78,56 @@ export function PageHistorico({ offers }: { offers: OfferBuy[] }) {
               </p>
             </div>
 
-            {/* Lista de Ofertas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 px-4 max-w-[1300px] mx-auto mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-w-[1300px] mx-auto mt-2">
               {filtered.length > 0 ? (
                 filtered.map((offer) => (
                   <Link
                     key={offer.id}
-                    href={`/historico/${offer.id}`} // 👉 Vai para a página de detalhes
+                    href={`/historico/${offer.id}`} 
                   >
                     <Card
                       className="
                       group relative overflow-hidden cursor-pointer
-                      border-2 border-purple-500/40 
-                      bg-linear-to-br from-purple-600 to-purple-700
-                      hover:border-purple-300 hover:shadow-xl 
+                      border-2 border-blue-600/30 bg-linear-to-br from-blue-600 to-blue-00 hover:border-blue-400 hover:shadow-xl 
                       hover:shadow-white/5 hover:scale-[1.02]
                       transition-all duration-300
                     "
                     >
-                      <CardContent className="p-6">
-                        <div className="flex items-start gap-4">
-                          {/* Ícone */}
-                          <div className="h-16 w-16 flex items-center justify-center rounded-xl bg-purple-400/20 border border-purple-300/30">
-                            <Package className="h-8 w-8 text-purple-200" />
+                      <CardContent className="py-1 px-2">
+                        <div className="flex flex-col gap-4">
+                          <div className="relative w-full h-60 rounded-xl overflow-hidden shadow-black/40 group transition-all duration-300">
+                            <Image
+                              src={offer.image ?? "/placeholder.png"}
+                              alt={offer.offerTag ?? "Oferta"}
+                              fill
+                              className="object-cover object-center transition-all duration-300 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-x-0 bottom-0 h-2/5 flex items-end justify-center pb-3 px-3">
+                              <p className="font-bold text-2xl text-white text-center drop-shadow-[0_2px_10px_rgba(0,0,0,1)] leading-tight line-clamp-2">
+                                {offer.offerTag ?? "Oferta"}
+                              </p>
+                            </div>
                           </div>
 
-                          {/* Informações */}
-                          <div className="flex-1">
-                            <h3 className="font-bold text-lg text-white truncate">
-                              Oferta: {offer.offerId}
-                            </h3>
-
-                            <p className="text-sm text-white/70">
-                              Comprada em {formatDate(offer.purchasedAt)}
+                          <div className="flex items-center gap-2 justify-between px-2">
+                            <p className="text-sm text-white drop-shadow-md">
+                              {formatDate(offer.purchasedAt)}
                             </p>
 
-                            <div className="mt-3 text-white/80 text-sm flex gap-4">
-                              <span>
-                                💰 {offer.price.toLocaleString()} V-Bucks
+                            <div
+                              className="flex items-center gap-2
+        bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg
+        border border-blue-400/40 shadow-lg"
+                            >
+                              <Image
+                                src="https://fortnite-api.com/images/vbuck.png"
+                                alt="V-Bucks"
+                                width={32}
+                                height={32}
+                                className="drop-shadow-lg"
+                              />
+                              <span className="font-extrabold text-3xl text-white tracking-wide drop-shadow-lg">
+                                {offer.price.toLocaleString()}
                               </span>
                             </div>
                           </div>

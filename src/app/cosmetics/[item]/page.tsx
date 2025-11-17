@@ -3,7 +3,13 @@ import {
   getShopItemIds,
 } from "@/src/actions/actionsFindItens";
 import PageItemCosmetics from "@/src/components/view/ItemCosmeticPage";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Item Fortnite",
+  description: "Item",
+};
 
 export default async function Page({
   params,

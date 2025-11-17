@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
-import { FortniteItems, FortniteSingleItem } from "../../types/cosmeticsType";
+import { FortniteItems, FortniteSingleItem } from "@/src/types/APIType";
 import {
   Card,
   CardContent,
@@ -31,16 +31,13 @@ import {
 import Link from "next/link";
 import { FunnelPlus, FunnelX } from "lucide-react";
 import { Tooltip } from "@radix-ui/react-tooltip";
-import { TooltipContent, TooltipTrigger } from "../ui-cn/tooltip";
+import { TooltipContent, TooltipTrigger } from "@/src/components/ui-cn/tooltip";
 
-// Função auxiliar para normalizar itens de diferentes categorias
 function normalizeItem(item: any, category: string): FortniteSingleItem {
-  // Para itens BR (já estão no formato correto)
   if (category === "br") {
     return item as FortniteSingleItem;
   }
 
-  // Para tracks (músicas)
   if (category === "tracks") {
     return {
       id: item.id,
@@ -57,7 +54,6 @@ function normalizeItem(item: any, category: string): FortniteSingleItem {
     };
   }
 
-  // Para instruments
   if (category === "instruments") {
     return {
       id: item.id,
@@ -70,7 +66,6 @@ function normalizeItem(item: any, category: string): FortniteSingleItem {
     };
   }
 
-  // Para cars
   if (category === "cars") {
     return {
       id: item.id,
@@ -83,7 +78,6 @@ function normalizeItem(item: any, category: string): FortniteSingleItem {
     };
   }
 
-  // Para lego
   if (category === "lego") {
     return {
       id: item.id,
@@ -94,7 +88,6 @@ function normalizeItem(item: any, category: string): FortniteSingleItem {
     };
   }
 
-  // Para legoKits
   if (category === "legoKits") {
     return {
       id: item.id,
@@ -109,7 +102,6 @@ function normalizeItem(item: any, category: string): FortniteSingleItem {
     };
   }
 
-  // Para beans
   if (category === "beans") {
     return {
       id: item.id,
@@ -133,7 +125,6 @@ export default function PageCosmeticsNew({
   listShop: string[];
   itensComprados?: string[];
 }) {
-  // 🔍 Filtros
   const [query, setQuery] = useState("");
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("todas");
   const [tipoSelecionado, setTipoSelecionado] = useState("todos");
@@ -143,14 +134,12 @@ export default function PageCosmeticsNew({
   const [apenasNovos, setApenasNovos] = useState(false);
   const [filtroTodos, setFiltroTodos] = useState(false);
 
-  // 📄 Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const itensPorPagina = 30;
 
   const [dataAtual] = useState(() => Date.now());
 
-  // 🔄 Combinar todos os itens em uma lista única
   const todosItens = useMemo(() => {
     const items: Array<FortniteSingleItem & { category: string }> = [];
 
@@ -199,18 +188,15 @@ export default function PageCosmeticsNew({
     return items;
   }, [initialData]);
 
-  // 🔎 Filtro por nome e categoria
   const itensFiltradosPorNomeECategoria = useMemo(() => {
     let filtered = todosItens;
 
-    // Filtrar por categoria
     if (categoriaSelecionada !== "todas") {
       filtered = filtered.filter(
         (item) => item.category === categoriaSelecionada
       );
     }
 
-    // Filtrar por nome
     if (query.trim()) {
       filtered = filtered.filter((item) =>
         item.name?.toLowerCase().includes(query.toLowerCase())
@@ -220,11 +206,10 @@ export default function PageCosmeticsNew({
     return filtered;
   }, [query, categoriaSelecionada, todosItens]);
 
-  // 🔎 Filtros disponíveis
   const tiposDisponiveis = useMemo(() => {
     const tipos = itensFiltradosPorNomeECategoria
       .map((item) => item.type?.value)
-      .filter((t): t is string => typeof t === "string" && t.length > 0); // ← Type guard
+      .filter((t): t is string => typeof t === "string" && t.length > 0);
     return Array.from(new Set(tipos)).sort((a, b) =>
       a.localeCompare(b, "pt", { sensitivity: "base" })
     );
@@ -233,13 +218,12 @@ export default function PageCosmeticsNew({
   const raridadesDisponiveis = useMemo(() => {
     const raridades = itensFiltradosPorNomeECategoria
       .map((item) => item.rarity?.value)
-      .filter((r): r is string => typeof r === "string" && r.length > 0); // ← Type guard
+      .filter((r): r is string => typeof r === "string" && r.length > 0);
     return Array.from(new Set(raridades)).sort((a, b) =>
       a.localeCompare(b, "pt", { sensitivity: "base" })
     );
   }, [itensFiltradosPorNomeECategoria]);
 
-  // Resultados filtrados (SEM limite)
   const resultadosFiltrados = useMemo(() => {
     return itensFiltradosPorNomeECategoria.filter((item) => {
       if (tipoSelecionado !== "todos" && item.type?.value !== tipoSelecionado)
@@ -279,14 +263,12 @@ export default function PageCosmeticsNew({
     dataAtual,
   ]);
 
-  // ⭐ Paginação aplicada
   const totalPaginas = Math.ceil(resultadosFiltrados.length / itensPorPagina);
   const resultadosPaginados = useMemo(() => {
     const inicio = (paginaAtual - 1) * itensPorPagina;
     return resultadosFiltrados.slice(inicio, inicio + itensPorPagina);
   }, [resultadosFiltrados, paginaAtual, itensPorPagina]);
 
-  // Reset página ao filtrar
   React.useEffect(() => {
     setPaginaAtual(1);
   }, [
@@ -299,7 +281,6 @@ export default function PageCosmeticsNew({
     apenasNovos,
   ]);
 
-  // Função para mudar de página com loading
   const mudarPagina = (novaPagina: number) => {
     setIsLoading(true);
     setPaginaAtual(novaPagina);
@@ -310,7 +291,6 @@ export default function PageCosmeticsNew({
     }, 300);
   };
 
-  // Função para gerar os números das páginas visíveis
   const gerarPaginasVisiveis = () => {
     const paginas: (number | string)[] = [];
     const maxPaginasVisiveis = 5;
@@ -341,7 +321,6 @@ export default function PageCosmeticsNew({
     return paginas;
   };
 
-  // Mapear categorias para nomes amigáveis
   const categoriaLabels: Record<string, string> = {
     todas: "Todas Categorias",
     br: "Battle Royale",
@@ -355,17 +334,16 @@ export default function PageCosmeticsNew({
 
   return (
     <div className="min-h-screen flex justify-center items-start bg-background py-2">
-      <ScrollArea>
-        <Card className="w-full min-w-none xl:min-w-[1400px] mx-auto border-0 shadow-md ">
-          <CardHeader>
-            <CardTitle className="font-bold text-5xl md:text-7xl shadow-lg text-black font-roboto uppercase bg-yellow-400 px-8 py-4 w-max rounded-2xl">
+      <ScrollArea className="max-w-7xl w-full">
+        <Card className="w-full border-0 shadow-md gap-3 md:gap-6">
+          <CardHeader className="p-0 md:pl-0 pl-2">
+            <CardTitle className="font-bold text-4xl sm:text-5xl md:text-7xl shadow-lg text-black font-roboto uppercase bg-yellow-400 py-2 px-4 md:px-8 md:py-4 w-max rounded-2xl break-word ">
               Busca de Itens
             </CardTitle>
           </CardHeader>
           <CardContent className="flex px-0 flex-col space-y-6 w-full">
-            {/* 🔍 Filtros */}
-            <div className="space-y-4 px-4 md:px-8 lg:px-12">
-              <div className="flex flex-col sm:flex-row md:items-center gap-2">
+            <div className="md:space-y-4 px-2">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-2 w-full">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Input
@@ -385,7 +363,6 @@ export default function PageCosmeticsNew({
                   </TooltipContent>
                 </Tooltip>
 
-                {/* Filtro de Categoria - sempre visível */}
                 <Select
                   value={categoriaSelecionada}
                   onValueChange={(v) => setCategoriaSelecionada(v)}
@@ -493,7 +470,7 @@ export default function PageCosmeticsNew({
                         {raridadesDisponiveis.map((r, i) => (
                           <SelectItem
                             key={i}
-                            value={r} // ← Remover a verificação !r ? "todas" : r
+                            value={r}
                             className="cursor-pointer border-t border-white rounded-none hover:bg-white/5"
                           >
                             {r}
@@ -583,7 +560,6 @@ export default function PageCosmeticsNew({
                 </div>
               )}
 
-              {/* ℹ️ Info de resultados */}
               <div className="text-sm font-roboto text-muted-foreground text-right mt-2">
                 {resultadosFiltrados.length} itens encontrados
                 {totalPaginas > 1 &&
@@ -591,7 +567,6 @@ export default function PageCosmeticsNew({
               </div>
             </div>
 
-            {/* 📜 Resultados */}
             <div className="overflow-hidden w-full relative min-h-[500px]">
               {isLoading && (
                 <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
@@ -606,8 +581,7 @@ export default function PageCosmeticsNew({
 
               {resultadosPaginados.length > 0 ? (
                 <>
-                  {/* Grid com tamanho máximo controlado */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 px-4 max-w-[1300px] mx-auto mt-2 ">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 px-2 max-w-[1300px] mx-auto mt-2 ">
                     {resultadosPaginados.map((item, i) => (
                       <Card
                         key={i}
@@ -618,51 +592,58 @@ export default function PageCosmeticsNew({
                         }`}
                         style={{ animationDelay: `${i * 30}ms` }}
                       >
-                        <Link
-                          href={`/cosmetics/${encodeURIComponent(item.id)}`}
-                          className="relative block aspect-square"
-                        >
-                          <Image
-                            src={
-                              item.images?.icon ||
-                              item.images?.smallIcon ||
-                              item.images?.featured ||
-                              "/placeholder.png"
-                            }
-                            alt={item.name}
-                            width={250}
-                            height={250}
-                            loading="lazy"
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
-                          <div className="absolute inset-x-0 bottom-0 h-2/5 flex items-end justify-center pb-4 px-3">
-                            <p className="font-bold text-sm sm:text-base text-white text-center drop-shadow-[0_2px_10px_rgba(0,0,0,1)] leading-tight line-clamp-2">
-                              {item.name}
-                            </p>
-                          </div>
-                          {item.rarity?.value && (
-                            <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm border border-yellow-500/50 text-xs font-bold text-yellow-400 shadow-lg">
-                              {item.rarity.value}
-                            </div>
-                          )}
-                          {itensComprados &&
-                          itensComprados.includes(item.id) ? (
-                            // Usuário logado e já adquiriu o item
-                            <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm border border-yellow-500/50 text-xs font-bold text-yellow-400 shadow-lg">
-                              Adquirido ✅
-                            </div>
-                          ) : listShop?.includes(item.id) ? (
-                            // Usuário não logado OU logado mas sem o item
-                            <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm border border-yellow-500/50 text-xs font-bold text-yellow-400 shadow-lg">
-                              Disponível na Loja
-                            </div>
-                          ) : null}
-                        </Link>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Link
+                              href={`/cosmetics/${encodeURIComponent(item.id)}`}
+                              className="relative block aspect-square"
+                            >
+                              <Image
+                                src={
+                                  item.images?.icon ||
+                                  item.images?.smallIcon ||
+                                  item.images?.featured ||
+                                  "/placeholder.png"
+                                }
+                                alt={item.name}
+                                width={250}
+                                height={250}
+                                loading="lazy"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+                              <div className="absolute inset-x-0 bottom-0 h-2/5 flex items-end justify-center pb-4 px-3">
+                                <p className="font-bold text-sm sm:text-base text-white text-center drop-shadow-[0_2px_10px_rgba(0,0,0,1)] leading-tight line-clamp-2">
+                                  {item.name}
+                                </p>
+                              </div>
+                              {item.rarity?.value && (
+                                <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm border border-yellow-500/50 text-xs font-bold text-yellow-400 shadow-lg">
+                                  {item.rarity.value}
+                                </div>
+                              )}
+                              {itensComprados &&
+                              itensComprados.includes(item.id) ? (
+                                <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm border border-yellow-500/50 text-xs font-bold text-yellow-400 shadow-lg">
+                                  Adquirido ✅
+                                </div>
+                              ) : listShop?.includes(item.id) ? (
+                                <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm border border-yellow-500/50 text-xs font-bold text-yellow-400 shadow-lg">
+                                  Disponível na Loja
+                                </div>
+                              ) : null}
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            sideOffset={10}
+                            className="bg-black/80 text-white border border-white/20 backdrop-blur-md"
+                          >
+                            <p>Clique para ver detalhes</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </Card>
                     ))}
                   </div>
-                  {/* 🔢 Paginação do Shadcn UI */}
                   {totalPaginas > 1 && (
                     <div className="mt-8 pb-6">
                       <Pagination className="bg-blue-950/50 w-max rounded-md mx-auto">

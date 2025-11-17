@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, ShoppingBag, Calendar } from "lucide-react";
+import { Search, Calendar } from "lucide-react";
 import Image from "next/image";
 import {
   Avatar,
@@ -28,18 +28,34 @@ import { ScrollArea } from "@/src/components/ui-cn/scroll-area";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { TooltipContent, TooltipTrigger } from "@/src/components/ui-cn/tooltip";
 import { getAllUsers, searchUsers } from "@/src/actions/actionsDB";
+import Link from "next/link";
+
+export type SafeUser = {
+  id: number;
+  name: string | null;
+  email: string;
+  image: string | null;
+  vbucks: number;
+  createdAt: Date;
+};
 
 interface UsersPageClientProps {
   initialData: {
-    users: any[];
+    users: SafeUser[];
     total: number;
     totalPages: number;
     currentPage: number;
   };
 }
-
+export const formatDate = (date: Date) => {
+  return new Date(date).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 export function PageUsers({ initialData }: UsersPageClientProps) {
-  const [users, setUsers] = useState(initialData.users);
+  const [users, setUsers] = useState<SafeUser[]>(initialData.users);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(initialData.totalPages);
@@ -47,9 +63,7 @@ export function PageUsers({ initialData }: UsersPageClientProps) {
   const [loading, setLoading] = useState(false);
   const pageSize = 20;
 
-  // Carregar usuários quando mudar de página ou buscar
   useEffect(() => {
-    // Se for a página inicial E não tem busca E já temos os dados iniciais, não fazer nada
     if (
       currentPage === 1 &&
       !searchQuery.trim() &&
@@ -82,7 +96,6 @@ export function PageUsers({ initialData }: UsersPageClientProps) {
     loadUsers();
   }, [currentPage, searchQuery]);
 
-  // Reset página ao buscar
   useEffect(() => {
     if (searchQuery.trim()) {
       setCurrentPage(1);
@@ -140,27 +153,18 @@ export function PageUsers({ initialData }: UsersPageClientProps) {
     return email.charAt(0).toUpperCase();
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
   return (
     <div className="min-h-screen flex justify-center items-start bg-background py-2">
-      <ScrollArea>
-        <Card className="w-full min-w-none xl:min-w-[1400px] mx-auto border-0 shadow-md">
-          <CardHeader>
+      <ScrollArea className="max-w-7xl w-full">
+        <Card className="w-full border-0 shadow-md">
+          <CardHeader className="px-0">
             <CardTitle className="font-bold text-5xl md:text-7xl shadow-lg text-black font-roboto uppercase bg-yellow-400 px-8 py-4 w-max rounded-2xl">
-              Gerenciar Usuários
+              Todos os Usuários
             </CardTitle>
           </CardHeader>
 
           <CardContent className="flex px-0 flex-col space-y-6 w-full">
-            {/* 🔍 Busca */}
-            <div className="space-y-4 px-4 md:px-8 lg:px-12">
+            <div className="space-y-4 px-2">
               <div className="flex flex-col sm:flex-row md:items-center gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -182,15 +186,12 @@ export function PageUsers({ initialData }: UsersPageClientProps) {
                   </TooltipContent>
                 </Tooltip>
               </div>
-
-              {/* ℹ️ Info de resultados */}
               <div className="text-sm font-roboto text-muted-foreground text-right mt-2">
                 {total} usuários encontrados
                 {totalPages > 1 && ` • Página ${currentPage} de ${totalPages}`}
               </div>
             </div>
 
-            {/* 📜 Lista de Usuários */}
             <div className="overflow-hidden w-full relative min-h-[500px]">
               {loading && (
                 <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center">
@@ -205,63 +206,70 @@ export function PageUsers({ initialData }: UsersPageClientProps) {
 
               {users.length > 0 ? (
                 <>
-                  {/* Grid de Usuários */}
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 px-4 max-w-[1300px] mx-auto mt-2">
                     {users.map((user, i) => (
                       <Card
                         key={user.id}
-                        className={`group relative overflow-hidden border-2 border-blue-500/30 bg-linear-to-br from-blue-500 to-blue-600 hover:border-blue-400 hover:shadow-xl hover:shadow-white/5 hover:scale-105 transition-all duration-300 ${
+                        className={`group relative overflow-hidden border-2 border-blue-500/30 bg-linear-to-br from-blue-500 to-blue-600 hover:border-blue-400 hover:shadow-xl hover:shadow-white/5 hover:scale-105 transition-all duration-300 py-2 ${
                           loading
                             ? "opacity-50 pointer-events-none"
                             : "animate-in fade-in duration-300"
                         }`}
                         style={{ animationDelay: `${i * 30}ms` }}
                       >
-                        <CardContent className="p-6">
-                          <div className="flex items-start gap-4">
-                            {/* Avatar */}
-                            <Avatar className="h-16 w-16 border-2 border-white/20">
-                              <AvatarImage src={user.image || undefined} />
-                              <AvatarFallback className="bg-linear-to-br from-yellow-400 to-yellow-600 text-black font-bold text-xl">
-                                {getInitials(user.name, user.email)}
-                              </AvatarFallback>
-                            </Avatar>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Link href={`/users/${user.id}`}>
+                              <CardContent className="p-6">
+                                <div className="flex items-start gap-4">
+                                  <Avatar className="h-16 w-16 border-2 border-white/20">
+                                    <AvatarImage
+                                      src={user.image || undefined}
+                                    />
+                                    <AvatarFallback className="bg-linear-to-br from-yellow-400 to-yellow-600 text-black font-bold text-xl">
+                                      {getInitials(user.name, user.email)}
+                                    </AvatarFallback>
+                                  </Avatar>
 
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-lg text-white truncate">
-                                {user.name || "Usuário sem nome"}
-                              </h3>
-                              <p className="text-sm text-white/80 truncate">
-                                {user.email}
-                              </p>
+                                  <div className="flex-1 min-w-0">
+                                    <h3 className="font-bold text-lg text-white truncate">
+                                      {user.name || "Usuário sem nome"}
+                                    </h3>
+                                    <p className="text-sm text-white/80 truncate">
+                                      {user.email}
+                                    </p>
 
-                              {/* Estatísticas */}
-                              <div className="flex items-baseline gap-4 mt-3 text-xs text-white/70">
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {formatDate(user.createdAt)}
+                                    <div className="flex items-baseline gap-4 mt-3 text-xs text-white/70">
+                                      <div className="flex items-center gap-1">
+                                        <Calendar className="h-3 w-3" />
+                                        {formatDate(user.createdAt)}
+                                      </div>
+                                      <div className="flex items-center gap-1 bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full font-bold text-sm mt-3 w-max">
+                                        <Image
+                                          src="https://fortnite-api.com/images/vbuck.png"
+                                          alt="V-Bucks"
+                                          width={16}
+                                          height={16}
+                                        />
+                                        {user.vbucks.toLocaleString()}
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-1 bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full font-bold text-sm mt-3 w-max">
-                                  <Image
-                                    src="https://fortnite-api.com/images/vbuck.png"
-                                    alt="V-Bucks"
-                                    width={16}
-                                    height={16}
-                                  />
-                                  {user.vbucks.toLocaleString()}
-                                </div>
-                              </div>
-
-                              {/* V-Bucks */}
-                            </div>
-                          </div>
-                        </CardContent>
+                              </CardContent>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            sideOffset={10}
+                            className="bg-black/80 text-white border border-white/20 backdrop-blur-md"
+                          >
+                            <p>Clique para ver os items desse usuário</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </Card>
                     ))}
                   </div>
 
-                  {/* 🔢 Paginação */}
                   {totalPages > 1 && (
                     <div className="mt-8 pb-6">
                       <Pagination className="bg-blue-950/50 w-max rounded-md mx-auto">

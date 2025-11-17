@@ -5,7 +5,12 @@ import {
 import { FindCosmeticsShop } from "@/src/actions/actionsFindItens";
 import PageShop from "@/src/components/view/ShopPage";
 import { auth } from "@/src/lib/auth";
+import { Metadata } from "next";
 
+export const metadata: Metadata = {
+  title: "Fortnite Shop",
+  description: "Loja interativa",
+};
 export default async function Page() {
   const { groupedBundles, groupedItems } = await FindCosmeticsShop();
   const session = await auth();
