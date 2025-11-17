@@ -11,11 +11,10 @@ export async function middleware(req: NextRequest) {
   if (!blockedForLogged.includes(pathname)) {
     return NextResponse.next();
   }
-
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET!,
-    secureCookie: false,
+    secureCookie: process.env.NODE_ENV === "production",
   });
 
   const isLoggedIn = !!token;
